@@ -40,6 +40,12 @@
   <img src="assets/lcvn.jpg" alt="task" width="660"/>
 </p>
 
+## 📰 News
+
+- **[2026-09]** 🏆 We are organizing the [**WorldNav track**](https://f1y1113.github.io/worldnav-challenge/) of the [RoboWorld Challenge 2026](https://roboworld2026.github.io/), affiliated with the [RoboPAD Workshop](https://robotpad2026.github.io/) at NeurIPS 2026. Join us in advancing world modeling for navigation, participants from all backgrounds are welcome!
+- **[2026-09]** 🎉 [LCVN](https://arxiv.org/abs/2603.26741) has been accepted to **NeurIPS 2026** as an **Oral** presentation!
+- **[2026-03]** 🚀 We introduce [LCVN](https://github.com/UWMILab/LCVN), connecting language grounding, future-state prediction, and action generation for visual navigation, with a benchmark of **39,016 trajectories** and **117,048 human-verified instructions**. Check out our [Technical Report](https://arxiv.org/abs/2603.26741)!
+
 **LCVN** studies language-conditioned visual navigation, where an embodied agent follows natural language instructions based solely on an initial egocentric observation — without access to goal images or intermediate environmental feedback. We formulate this as open-loop trajectory prediction conditioned on linguistic instructions and introduce the **LCVN Dataset**, a benchmark of 39,016 trajectories and 117,048 human-verified instructions spanning diverse environments and instruction styles. We propose two complementary model families: **LCVN-WM + LCVN-AC**, combining a diffusion-based world model with a latent-space actor–critic agent trained via intrinsic rewards, and **LCVN-Uni**, an autoregressive multimodal architecture that jointly predicts actions and future observations in a single forward pass.
 
 ---
