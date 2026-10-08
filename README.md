@@ -350,9 +350,9 @@ bash eval.sh
 If you find this work useful, please consider citing:
 
 ```bibtex
-@misc{dong2026languageconditionedworldmodelingvisual,
+@misc{dong2026lcvn,
       title={Language-Conditioned World Modeling for Visual Navigation}, 
-      author={Yifei Dong and Fengyi Wu and Yilong Dai and Lingdong Kong and Guangyu Chen and Xu Zhu and Qiyu Hu and Tianyu Wang and Johnalbert Garnica and Feng Liu and Siyu Huang and Qi Dai and Zhi-Qi Cheng},
+      author={Yifei Dong and Fengyi Wu and Yilong Dai and Lingdong Kong and Guangyu Chen and Yetong Sha and Qiyu Hu and Feng Liu and Siyu Huang and Qi Dai and Zhi-Qi Cheng},
       year={2026},
       eprint={2603.26741},
       archivePrefix={arXiv},
