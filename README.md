@@ -350,14 +350,12 @@ bash eval.sh
 If you find this work useful, please consider citing:
 
 ```bibtex
-@misc{dong2026lcvn,
-      title={Language-Conditioned World Modeling for Visual Navigation}, 
-      author={Yifei Dong and Fengyi Wu and Yilong Dai and Lingdong Kong and Guangyu Chen and Yetong Sha and Qiyu Hu and Feng Liu and Siyu Huang and Qi Dai and Zhi-Qi Cheng},
-      year={2026},
-      eprint={2603.26741},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2603.26741}, 
+@inproceedings{dong2026language,
+  title={{Language-Conditioned World Modeling for Visual Navigation}},
+  author={Dong, Yifei and Wu, Fengyi and Dai, Yilong and Kong, Lingdong and Chen, Guangyu and Sha, Yetong and Hu, Qiyu and Liu, Feng and Huang, Siyu and Dai, Qi and Cheng, Zhi-Qi},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2026},
+  url={https://arxiv.org/abs/2603.26741}
 }
 ```
 
