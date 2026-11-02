@@ -369,4 +369,4 @@ If you find this work useful, please consider citing:
 
 ## 🤝 Acknowledgments
 
-This work is built based on [DFoT](https://github.com/kwsong0113/diffusion-forcing-transformer), [UniWM](https://github.com/F1y1113/UniWM) and [LUMOS](https://github.com/nematoli/lumos). Thanks to all the authors for their great work.
+This work is built based on [UniWM](https://github.com/F1y1113/UniWM), [DFoT](https://github.com/kwsong0113/diffusion-forcing-transformer) and [LUMOS](https://github.com/nematoli/lumos). Thanks to all the authors for their great work.
