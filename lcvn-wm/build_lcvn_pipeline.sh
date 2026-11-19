@@ -153,7 +153,7 @@ if [[ "$RUN_STEP5" == "1" ]]; then
             --metadata_dir "$DATA_DIR/metadata" \
             --social_save_dir "$DATA_DIR" \
             --resolution "$RESOLUTION" \
-            --fp16
+            --no_fp16
     done
     log "Step 5 done."
 fi
