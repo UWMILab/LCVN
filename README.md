@@ -335,10 +335,10 @@ bash eval.sh
 
 ## 📄 Citation
 
-If you find this work useful, please consider citing:
+If you find this work useful, please consider citing UniWM and LCVN:
 
 ```bibtex
-@inproceedings{dong2026towards,
+@inproceedings{dong2026uniwm,
   title={{Towards Unified World Models for Visual Navigation via Memory-Augmented Planning and Foresight}},
   author={Dong, Yifei and Wu, Fengyi and Chen, Guangyu and Kong, Lingdong and Hu, Qiyu and Zhou, Yuxuan and Zhu, Xu and Sun, Jingdong and He, Jun-Yan and Dai, Qi and Hauptmann, Alexander G. and Cheng, Zhi-Qi},
   booktitle={European Conference on Computer Vision},
@@ -346,7 +346,7 @@ If you find this work useful, please consider citing:
   url={https://arxiv.org/abs/2510.08713}
 }
 
-@inproceedings{dong2026language,
+@inproceedings{dong2026lcvn,
   title={{Language-Conditioned World Modeling for Visual Navigation}},
   author={Dong, Yifei and Wu, Fengyi and Dai, Yilong and Kong, Lingdong and Chen, Guangyu and Sha, Yetong and Hu, Qiyu and Liu, Feng and Huang, Siyu and Dai, Qi and Cheng, Zhi-Qi},
   booktitle={Advances in Neural Information Processing Systems},
