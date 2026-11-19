@@ -1,5 +1,13 @@
+# @package _global_
 # Auto-loaded when dataset=lcvn and experiment=video_generation.
-# Contains DiT-XL architecture defaults and batch sizes for LCVN social dataset.
+# Contains DiT-XL architecture defaults, precision fixes, and 100-epoch
+# full-dataset hyperparameters calibrated for 4x A100 80GB (Global BS = 48).
+# Note: 86,439 training trajectories / 48 = 1,801 steps/epoch -> 180,100 steps for 100 epochs.
+# If running on 8 GPUs (Global BS = 96, 901 steps/epoch), override:
+#   algorithm.lr_scheduler.num_training_steps=90100 experiment.training.lr=8e-4
+
+dataset:
+  subdataset_size: null
 
 algorithm:
   backbone:
@@ -11,14 +19,24 @@ algorithm:
     linear_hidden_dim: 1144
     angular_hidden_dim: 1144
     dt_hidden_dim: 8
+  lr_scheduler:
+    num_warmup_steps: 10000
+    num_training_steps: 180100
 
 wandb:
   project: lcvn-social
 
 experiment:
+  reload_dataloaders_every_n_epochs: 0
   training:
+    precision: bf16-mixed
+    lr: 6e-4
     batch_size: 12
+    max_epochs: 100
+    data:
+      shuffle: true
   validation:
+    precision: bf16-mixed
     batch_size: 8
   test:
     batch_size: 4

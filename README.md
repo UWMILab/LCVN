@@ -54,11 +54,23 @@
 
 - [LCVN](#lcvn)
   - [Table of Contents](#-table-of-contents)
+  - [Getting Started](#-getting-started)
   - [LCVN Dataset](#-lcvn-dataset)
   - [LCVN-WM](#-lcvn-wm)
   - [LCVN-AC](#-lcvn-ac)
   - [LCVN-Uni](#-lcvn-uni)
   - [Citation](#-citation)
+
+---
+
+## 🚀 Getting Started
+
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/UWMILab/LCVN.git
+cd LCVN
+```
 
 ---
 
@@ -162,32 +174,36 @@ cd lcvn-wm
 bash build_lcvn_pipeline.sh
 ```
 
-This script prepares the dataset end-to-end in the following order:
+The processed splits are kept separate under `lcvn-wm/data/lcvn/{training,validation_seen,validation_unseen}/`.
 
-1. **Build metadata** separately for `train`, `val_seen`, and `val_unseen`
-2. **Encode frames → latents** using `stabilityai/sd-vae-ft-ema` (initial encoding)
-3. **Build initial cache** from the SD-VAE latents
-4. **Train custom VAE** on this dataset
-5. **Re-encode frames** with the trained VAE
-6. **Rebuild final cache** using the new latents
-
-Each step can be skipped individually by setting the corresponding `RUN_STEPx=0` environment variable. The processed splits are kept separate under `lcvn-wm/data/lcvn/{training,validation_seen,validation_unseen}/`.
+<details>
+<summary>Details: What <code>build_lcvn_pipeline.sh</code> does (Steps 1–6)</summary>
+<p>This script prepares the dataset end-to-end in the following order:</p>
+<ol>
+<li><strong>Build metadata</strong> separately for <code>train</code>, <code>val_seen</code>, and <code>val_unseen</code></li>
+<li><strong>Encode frames → latents</strong> using <code>stabilityai/sd-vae-ft-ema</code> (initial encoding)</li>
+<li><strong>Build initial cache</strong> from the SD-VAE latents</li>
+<li><strong>Train custom VAE</strong> on this dataset</li>
+<li><strong>Re-encode frames</strong> with the trained VAE</li>
+<li><strong>Rebuild final cache</strong> using the new latents</li>
+</ol>
+<p>Each step can be skipped individually by setting the corresponding <code>RUN_STEPx=0</code> environment variable.</p>
+</details>
 
 
 ### Train
 
 ```bash
-WANDB_MODE=online python -m main \
-  '+name=LcvnWM_Social_DiT_XL' \
-  dataset=lcvn \
-  algorithm=ldit_video_social \
-  experiment=video_generation \
-  dataset.split_name_map.validation=validation_seen \
-  wandb.entity=<YOUR_WANDB_ENTITY> \
-  +logger.wandb.log_model=False
+WANDB_MODE=online python -m main '+name=LcvnWM_Social_DiT_XL' dataset=lcvn algorithm=ldit_video_social experiment=video_generation dataset.split_name_map.validation=validation_seen +logger.wandb.log_model=False
 ```
 
-**Resume from checkpoint** — add this argument to the command above:
+**Optional: log to a specific wandb entity** — append this argument to the end of the command above (separated by a space):
+
+```bash
+wandb.entity=<YOUR_WANDB_ENTITY>
+```
+
+**Optional: resume from a checkpoint** — append this argument to the end of the command above (separated by a space):
 
 ```
 load='"/path/to/checkpoint.ckpt"'
@@ -204,35 +220,19 @@ The current public LCVN release does not provide a separate `test` split. Use th
 **Validation on seen environments**
 
 ```bash
-WANDB_MODE=online python -m main \
-  '+name=LcvnWM_ValSeen' \
-  dataset=lcvn \
-  algorithm=ldit_video_social \
-  experiment=video_generation \
-  experiment.tasks=[validation] \
-  dataset.split_name_map.validation=validation_seen \
-  experiment.ema.enable=False \
-  wandb.entity=<YOUR_WANDB_ENTITY> \
-  load="../outputs/social_dit_xl.ckpt" \
-  +logger.wandb.log_model=False \
-  experiment.validation.limit_batch=4
+WANDB_MODE=online python -m main '+name=LcvnWM_ValSeen' dataset=lcvn algorithm=ldit_video_social experiment=video_generation experiment.tasks=[validation] dataset.split_name_map.validation=validation_seen experiment.ema.enable=False load="../outputs/social_dit_xl.ckpt" +logger.wandb.log_model=False experiment.validation.limit_batch=4
 ```
 
 **Validation on unseen environments**
 
 ```bash
-WANDB_MODE=online python -m main \
-  '+name=LcvnWM_ValUnseen' \
-  dataset=lcvn \
-  algorithm=ldit_video_social \
-  experiment=video_generation \
-  experiment.tasks=[validation] \
-  dataset.split_name_map.validation=validation_unseen \
-  experiment.ema.enable=False \
-  wandb.entity=<YOUR_WANDB_ENTITY> \
-  load="../outputs/social_dit_xl.ckpt" \
-  +logger.wandb.log_model=False \
-  experiment.validation.limit_batch=4
+WANDB_MODE=online python -m main '+name=LcvnWM_ValUnseen' dataset=lcvn algorithm=ldit_video_social experiment=video_generation experiment.tasks=[validation] dataset.split_name_map.validation=validation_unseen experiment.ema.enable=False load="../outputs/social_dit_xl.ckpt" +logger.wandb.log_model=False experiment.validation.limit_batch=4
+```
+
+**Optional: log to a specific wandb entity** — append this argument to the end of either command above (separated by a space):
+
+```bash
+wandb.entity=<YOUR_WANDB_ENTITY>
 ```
 
 ---
@@ -268,15 +268,13 @@ LCVN_VAL_SPLIT_NAME=validation_seen NPROC=1 ./train_ac.sh datamodule.batch_size=
 **Resume from checkpoint (4 GPUs):**
 
 ```bash
-LCVN_VAL_SPLIT_NAME=validation_seen ./train_ac.sh datamodule.batch_size=64 \
-  ckpt_path=/path/to/model_weights/last.ckpt
+LCVN_VAL_SPLIT_NAME=validation_seen ./train_ac.sh datamodule.batch_size=64 ckpt_path=/path/to/model_weights/last.ckpt
 ```
 
 **Resume from checkpoint (single GPU):**
 
 ```bash
-LCVN_VAL_SPLIT_NAME=validation_seen NPROC=1 ./train_ac.sh datamodule.batch_size=64 \
-  ckpt_path=/path/to/model_weights/last.ckpt
+LCVN_VAL_SPLIT_NAME=validation_seen NPROC=1 ./train_ac.sh datamodule.batch_size=64 ckpt_path=/path/to/model_weights/last.ckpt
 ```
 
 AC training always reads training data from `lcvn-wm/data/lcvn/training/`. The validation side is switched by `LCVN_VAL_SPLIT_NAME`, so you can point it to either `validation_seen` or `validation_unseen` without touching the trainer logic. `ckpt_path=...` only controls which checkpoint to resume from; it is independent of the validation split choice.
@@ -290,25 +288,13 @@ The public release does not include a separate AC test split either, so evaluati
 **Validation on seen environments**
 
 ```bash
-python -m lcvn_ac.scripts.test_single_trajectory_real_dfot \
-  ckpt_path=/path/to/model_weights/last.ckpt \
-  +eval_loader=validation \
-  datamodule.root_data_dir="${oc.env:PWD}/../lcvn-wm/data/lcvn" \
-  datamodule.val_split_name=validation_seen \
-  datamodule.batch_size=1 \
-  trainer.devices=1
+python -m lcvn_ac.scripts.test_single_trajectory_real_dfot ckpt_path=/path/to/model_weights/last.ckpt +eval_loader=validation datamodule.root_data_dir="${oc.env:PWD}/../lcvn-wm/data/lcvn" datamodule.val_split_name=validation_seen datamodule.batch_size=1 trainer.devices=1
 ```
 
 **Validation on unseen environments**
 
 ```bash
-python -m lcvn_ac.scripts.test_single_trajectory_real_dfot \
-  ckpt_path=/path/to/model_weights/last.ckpt \
-  +eval_loader=validation \
-  datamodule.root_data_dir="${oc.env:PWD}/../lcvn-wm/data/lcvn" \
-  datamodule.val_split_name=validation_unseen \
-  datamodule.batch_size=1 \
-  trainer.devices=1
+python -m lcvn_ac.scripts.test_single_trajectory_real_dfot ckpt_path=/path/to/model_weights/last.ckpt +eval_loader=validation datamodule.root_data_dir="${oc.env:PWD}/../lcvn-wm/data/lcvn" datamodule.val_split_name=validation_unseen datamodule.batch_size=1 trainer.devices=1
 ```
 
 ---
