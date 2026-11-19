@@ -81,21 +81,23 @@ cd LCVN
 
 We host the LCVN dataset on Hugging Face: [fly1113/LCVN](https://huggingface.co/datasets/fly1113/LCVN).
 
-LCVN is a language-conditioned visual navigation dataset for open-loop trajectory generation. Given an initial egocentric observation and a natural language instruction, the agent is required to generate the future navigation trajectory without intermediate environmental feedback.
-
-The full LCVN benchmark contains 39,016 trajectories and 117,048 human-verified instructions. Each trajectory is annotated with three instruction styles:
-
-- **Concise**: short instructions containing essential directional cues.
-- **Intricate**: detailed instructions describing visual context, objects, people, and scene layout.
-- **Landmark-grounded**: instructions explicitly anchored to salient environmental landmarks.
-
-The current Hugging Face release contains three splits:
-
-- `train.tar`: training split.
-- `val_seen.tar`: validation split from seen environments.
-- `val_unseen.tar`: validation split from unseen environments.
-
-Go Stanford, ReCon, SCAND, and HuRoN are used for training and in-domain evaluation, while TartanDrive is reserved for unseen-environment evaluation.
+<details>
+<summary>Details: Dataset overview, instruction styles, and splits</summary>
+<p>LCVN is a language-conditioned visual navigation dataset for open-loop trajectory generation. Given an initial egocentric observation and a natural language instruction, the agent is required to generate the future navigation trajectory without intermediate environmental feedback.</p>
+<p>The full LCVN benchmark contains 39,016 trajectories and 117,048 human-verified instructions. Each trajectory is annotated with three instruction styles:</p>
+<ul>
+<li><strong>Concise</strong>: short instructions containing essential directional cues.</li>
+<li><strong>Intricate</strong>: detailed instructions describing visual context, objects, people, and scene layout.</li>
+<li><strong>Landmark-grounded</strong>: instructions explicitly anchored to salient environmental landmarks.</li>
+</ul>
+<p>The current Hugging Face release contains three splits:</p>
+<ul>
+<li><code>train.tar</code>: training split.</li>
+<li><code>val_seen.tar</code>: validation split from seen environments.</li>
+<li><code>val_unseen.tar</code>: validation split from unseen environments.</li>
+</ul>
+<p>Go Stanford, ReCon, SCAND, and HuRoN are used for training and in-domain evaluation, while TartanDrive is reserved for unseen-environment evaluation.</p>
+</details>
 
 To download and extract all released splits into `data/lcvn/` with a single command:
 
