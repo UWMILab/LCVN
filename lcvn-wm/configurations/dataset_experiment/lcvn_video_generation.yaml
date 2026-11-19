@@ -1,3 +1,4 @@
+# @package _global_
 # Auto-loaded when dataset=lcvn and experiment=video_generation.
 # Contains DiT-XL architecture defaults and batch sizes for LCVN social dataset.
 
@@ -17,8 +18,10 @@ wandb:
 
 experiment:
   training:
+    precision: bf16-mixed
     batch_size: 12
   validation:
+    precision: bf16-mixed
     batch_size: 8
   test:
     batch_size: 4
