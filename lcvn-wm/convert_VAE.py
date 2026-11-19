@@ -110,6 +110,7 @@ def main():
     parser.add_argument("--suffix", type=str, default="latent")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--fp16", action="store_true", default=True)
+    parser.add_argument("--no_fp16", action="store_false", dest="fp16")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--num_shards", type=int, default=None)
     parser.add_argument("--shard_idx", type=int, default=None)
@@ -455,7 +456,7 @@ def main():
                     video = video.half()
                 with torch.no_grad():
                     enc = vae.encode(video)
-                    latent = (enc.latent_dist.sample() if hasattr(enc, "latent_dist") else enc.sample()).to(torch.float16)
+                    latent = (enc.latent_dist.sample() if hasattr(enc, "latent_dist") else enc.sample()).to(torch.float16 if args.fp16 else torch.bfloat16)
                 safe_torch_save(latent.cpu(), save_path)
                 encoded_count += 1
             except Exception as e:
