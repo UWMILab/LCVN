@@ -339,10 +339,12 @@ If you find this work useful, please consider citing UniWM and LCVN:
 
 ```bibtex
 @inproceedings{dong2026uniwm,
-  title={{Towards Unified World Models for Visual Navigation via Memory-Augmented Planning and Foresight}},
+  title={Towards Unified World Models for Visual Navigation via Memory-Augmented Planning and Foresight},
   author={Dong, Yifei and Wu, Fengyi and Chen, Guangyu and Kong, Lingdong and Hu, Qiyu and Zhou, Yuxuan and Zhu, Xu and Sun, Jingdong and He, Jun-Yan and Dai, Qi and Hauptmann, Alexander G. and Cheng, Zhi-Qi},
   booktitle={European Conference on Computer Vision},
+  pages={276--295},
   year={2026},
+  organization={Springer},
   url={https://arxiv.org/abs/2510.08713}
 }
 
