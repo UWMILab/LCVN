@@ -176,7 +176,17 @@ cd lcvn-wm
 bash build_lcvn_pipeline.sh
 ```
 
-The processed splits are kept separate under `lcvn-wm/data/lcvn/{training,validation_seen,validation_unseen}/`.
+Or download the preprocessed files from Hugging Face to skip Steps 1–5: download [`vae.ckpt`](https://huggingface.co/fly1113/LCVN_Model/blob/main/vae.ckpt) and place it at `outputs/vae.ckpt`, and download [`metadata.tar`](https://huggingface.co/datasets/fly1113/LCVN/blob/main/metadata.tar) and [`vae_latents.tar`](https://huggingface.co/datasets/fly1113/LCVN/blob/main/vae_latents.tar) and extract them to `lcvn-wm/data/lcvn/metadata/` and `lcvn-wm/data/lcvn/latents/`, respectively. If you also plan to train **LCVN-AC**, run Step 6 once to build the AC feature cache (`RUN_STEP1=0 RUN_STEP2=0 RUN_STEP3=0 RUN_STEP4=0 RUN_STEP5=0 RUN_STEP6=1 bash build_lcvn_pipeline.sh`).
+
+Expected processed layout under `LCVN/`:
+
+```text
+outputs/vae.ckpt                                                      # trained custom ImageVAE
+lcvn-wm/data/lcvn/
+├── metadata/{training,validation_seen,validation_unseen}.pt          # trajectory metadata & conditions (LCVN-WM)
+├── latents/{training,validation_seen,validation_unseen}/*_latent.pt  # VAE-encoded bfloat16 latents (LCVN-WM)
+└── {training,validation_seen,validation_unseen}/                     # cached features (LCVN-AC, built in Step 6)
+```
 
 <details>
 <summary>Details: What <code>build_lcvn_pipeline.sh</code> does (Steps 1–6)</summary>
