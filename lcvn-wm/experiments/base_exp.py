@@ -146,10 +146,12 @@ class BaseLightningExperiment(BaseExperiment):
                 self.algo_name = algo_name
 
             def on_train_end(self, trainer, pl_module):
+                if not trainer.is_global_zero:
+                    return
                 ckpt_cb = trainer.checkpoint_callback
-                best_ckpt = getattr(ckpt_cb, "best_model_path", None) or getattr(ckpt_cb, "last_model_path", None)
-                if ckpt_cb and best_ckpt:
-                    if not os.path.exists(best_ckpt):
+                final_ckpt = getattr(ckpt_cb, "last_model_path", None) or getattr(ckpt_cb, "best_model_path", None)
+                if ckpt_cb and final_ckpt:
+                    if not os.path.exists(final_ckpt):
                         return
 
                     filename = None
@@ -164,11 +166,11 @@ class BaseLightningExperiment(BaseExperiment):
                         # Save to ../outputs relative to the execution directory (lcvn-wm)
                         target = os.path.abspath(os.path.join(hydra.utils.get_original_cwd(), "..", "outputs", filename))
                         os.makedirs(os.path.dirname(target), exist_ok=True)
-                        print(f"\n[AutoCopy] Copying final checkpoint to {target}")
+                        print(f"\n[AutoCopy] Copying final checkpoint ({final_ckpt}) to {target}")
                         try:
                             if os.path.exists(target):
                                 os.remove(target)
-                            shutil.copy(best_ckpt, target)
+                            shutil.copy(final_ckpt, target)
                             print(f"[AutoCopy] Successfully updated {filename}")
                         except Exception as e:
                             print(f"[AutoCopy] Failed to copy checkpoint: {e}")
