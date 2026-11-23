@@ -21,7 +21,7 @@ training:
   checkpointing:
     every_n_train_steps: null
     every_n_epochs: 5
-    save_last: true
+    save_last: "link"
     save_top_k: 1
     # Keep monitor null so periodic checkpoints and last.ckpt always update every N epochs
     # instead of gating on noisy single-step diffusion training/loss.

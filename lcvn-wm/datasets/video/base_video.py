@@ -395,41 +395,18 @@ class BaseAdvancedVideoDataset(BaseVideoDataset):
 
     def prepare_clips(self) -> None:
         """
-        Fixed version: directly scan .pt files on disk (Tensor data), ignore Metadata errors
+        Index one clip per trajectory per epoch so epoch length matches the
+        trajectory count (keeping LR schedules calibrated), while __getitem__
+        randomly samples start_frame across the full trajectory during training.
         """
-        import glob
-        import os
-        import torch
-        from pathlib import Path
+        if not hasattr(self, "metadata") or len(self.metadata) == 0:
+            raise ValueError(
+                f"No valid trajectories remain for split '{self.split}' "
+                f"(metadata_dir={self.metadata_dir}, latent_dir={self.latent_dir})."
+            )
 
-        # --- 1. Brute-force scan: check what's on disk directly ---
-        if not hasattr(self, 'metadata') or not self.metadata:
-            # Build path: data/social/training/*.pt
-            search_path = os.path.join(str(self.latent_dir), self.split, "*.pt")
-            print(f"\n[DEBUG] Scanning files: {search_path}")
-
-            found_files = sorted(glob.glob(search_path))
-            print(f"[DEBUG] Scan found {len(found_files)} files")
-
-            # Use found real paths as Metadata
-            self.metadata = found_files
-
-        # --- 2. Safety check ---
-        if len(self.metadata) == 0:
-            raise ValueError(f"Critical error: no .pt files found in {self.latent_dir}/{self.split}!")
-
-        # --- 3. Compute clip count ---
-        # Since files are confirmed as [12, 4, 32, 32] Tensors, each file counts as 1 sample
-        counts = []
-        for item in self.metadata:
-            counts.append(1)
-
-        num_clips = torch.as_tensor(counts)
-
-        # --- 4. Update cumulative index (this was the root cause of the IndexError) ---
+        num_clips = torch.ones(len(self.metadata), dtype=torch.long)
         self.cumulative_sizes = num_clips.cumsum(0).tolist()
-
-        # --- 5. Rebuild index mapping ---
         self.idx_remap = self._build_idx_remap()
 
 
@@ -571,7 +548,13 @@ class BaseAdvancedVideoDataset(BaseVideoDataset):
         video_idx, clip_idx = self.get_clip_location(idx)
         video_metadata = self.metadata[video_idx]
         video_length = self.video_length(video_metadata)
-        start_frame, end_frame = clip_idx, min(clip_idx + self.n_frames, video_length)
+        if self.split == "training" and video_length > self.n_frames:
+            max_start = video_length - self.n_frames
+            # Use torch.randint (seeded per DataLoader worker) rather than Python random
+            start_frame = int(torch.randint(0, max_start + 1, (1,)).item())
+            end_frame = start_frame + self.n_frames
+        else:
+            start_frame, end_frame = clip_idx, min(clip_idx + self.n_frames, video_length)
 
         video, latent, cond = None, None, None
         if self.use_preprocessed_latents:

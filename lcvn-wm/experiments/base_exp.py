@@ -166,13 +166,18 @@ class BaseLightningExperiment(BaseExperiment):
                         # Save to ../outputs relative to the execution directory (lcvn-wm)
                         target = os.path.abspath(os.path.join(hydra.utils.get_original_cwd(), "..", "outputs", filename))
                         os.makedirs(os.path.dirname(target), exist_ok=True)
+                        tmp_target = f"{target}.tmp"
                         print(f"\n[AutoCopy] Copying final checkpoint ({final_ckpt}) to {target}")
                         try:
-                            if os.path.exists(target):
-                                os.remove(target)
-                            shutil.copy(final_ckpt, target)
+                            shutil.copy(final_ckpt, tmp_target)
+                            os.replace(tmp_target, target)
                             print(f"[AutoCopy] Successfully updated {filename}")
                         except Exception as e:
+                            if os.path.exists(tmp_target):
+                                try:
+                                    os.remove(tmp_target)
+                                except OSError:
+                                    pass
                             print(f"[AutoCopy] Failed to copy checkpoint: {e}")
         algo_name = self.root_cfg.algorithm.get("_name", "")
         callbacks.append(AutoCopyCheckpointCallback(algo_name))

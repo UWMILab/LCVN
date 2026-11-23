@@ -289,6 +289,8 @@ class ImageVAE(VAE):
         cfg: DictConfig,
     ):
         super().__init__()
+        if isinstance(cfg, dict):
+            cfg = OmegaConf.create(cfg)
         ddconfig, embed_dim = cfg.ddconfig, cfg.embed_dim
         self.encoder = Encoder(**ddconfig)
         self.decoder = Decoder(**ddconfig)
@@ -309,10 +311,15 @@ class ImageVAE(VAE):
             path = wandb_to_local_path(path)
         elif is_hf_path(path):
             path = hf_to_local_path(path)
-        checkpoint = torch.load(path, map_location="cpu")
+        checkpoint = torch.load(path, map_location="cpu", weights_only=False)
         if "cfg" not in checkpoint:
+            from pathlib import Path
+
             checkpoint["cfg"] = OmegaConf.load(
-                "configurations/algorithm/image_vae.yaml"
+                Path(__file__).resolve().parents[3]
+                / "configurations"
+                / "algorithm"
+                / "image_vae.yaml"
             )
             checkpoint["cfg"].ddconfig.resolution = 256
         cfg = checkpoint["cfg"]

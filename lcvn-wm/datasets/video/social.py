@@ -240,40 +240,69 @@ class SocialAdvancedVideoDataset(BaseAdvancedVideoDataset):
             end_frame: Optional[int] = None,
     ) -> torch.Tensor:
         """
-        Override base load_video to read frames by index without pts metadata.
-        Returns (T, C, H, W) in [0, 1].
+        Load frames for a trajectory (either a directory of numbered image frames
+        such as 0.jpg, 1.jpg, ... or a video file).
+        Returns (T, C, H, W) float32 tensor in [0, 1].
         """
         if end_frame is None:
             end_frame = self.video_length(video_metadata)
 
         if isinstance(video_metadata, (str, Path)):
-            video_path = video_metadata
+            video_path = Path(video_metadata)
         else:
-            video_path = video_metadata.get("video_paths", video_metadata.get("video_path"))
+            video_path = Path(
+                video_metadata.get("video_paths", video_metadata.get("video_path"))
+            )
 
-        cap = cv2.VideoCapture(str(video_path))
-        # Note: do not rely on CAP_PROP_FRAME_COUNT as it can be inaccurate
-        frames = []
-        for i in range(start_frame, end_frame):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, i)
-            ok, frame = cap.read()
-            if not ok:
-                break  # Stop if can't read, pad later
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            arr = frame.astype(np.float32) / 255.0
-            arr = np.transpose(arr, (2, 0, 1))
-            frames.append(torch.from_numpy(arr))
-        cap.release()
+        if not video_path.exists():
+            raise FileNotFoundError(f"Video path does not exist: {video_path}")
 
         target_length = end_frame - start_frame
-        current_length = len(frames)
+        frames = []
 
+        if video_path.is_dir():
+            image_files = list(video_path.glob("*.jpg"))
+            if not image_files:
+                image_files = list(video_path.glob("*.png"))
+            image_files.sort(
+                key=lambda p: (0, int(p.stem)) if p.stem.isdigit() else (1, p.stem)
+            )
+            if not image_files:
+                raise FileNotFoundError(
+                    f"No .jpg or .png frames found in trajectory directory: {video_path}"
+                )
+            for img_path in image_files[start_frame:end_frame]:
+                frame = cv2.imread(str(img_path))
+                if frame is None:
+                    raise RuntimeError(f"Failed to read image frame: {img_path}")
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                arr = frame.astype(np.float32) / 255.0
+                arr = np.transpose(arr, (2, 0, 1))
+                frames.append(torch.from_numpy(arr))
+        else:
+            cap = cv2.VideoCapture(str(video_path))
+            if not cap.isOpened():
+                cap.release()
+                raise RuntimeError(f"Failed to open video file: {video_path}")
+            for i in range(start_frame, end_frame):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+                ok, frame = cap.read()
+                if not ok:
+                    break
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                arr = frame.astype(np.float32) / 255.0
+                arr = np.transpose(arr, (2, 0, 1))
+                frames.append(torch.from_numpy(arr))
+            cap.release()
+
+        current_length = len(frames)
         if current_length == 0:
-            # If no frames read, return all-black video (avoid tensor stack error)
-            return torch.zeros(target_length, 3, self.cfg.resolution, self.cfg.resolution)
+            raise RuntimeError(
+                f"Loaded 0 frames from {video_path} for range [{start_frame}, {end_frame})"
+            )
 
         if current_length < target_length:
-            # If frames missing, repeat last frame to pad
+            # If frames missing at the tail, repeat last frame to pad
             missing_count = target_length - current_length
             last_frame = frames[-1]
             for _ in range(missing_count):

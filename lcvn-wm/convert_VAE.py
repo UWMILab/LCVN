@@ -46,10 +46,17 @@ def load_vae(ckpt_path: str, device: torch.device, use_fp16: bool) -> ImageVAE:
         if "cfg" in checkpoint:
             vae = ImageVAE(checkpoint["cfg"])
         else:
-            # No cfg found, fall back to default config
+            # No cfg found, fall back to repository ImageVAE config
             from omegaconf import OmegaConf
-            # Default z_channels=4, resolution=256; adjust if needed
-            vae = ImageVAE(OmegaConf.create({"z_channels": 4, "resolution": 256}))
+            default_cfg_path = (
+                Path(__file__).resolve().parent
+                / "configurations"
+                / "algorithm"
+                / "image_vae.yaml"
+            )
+            vae_cfg = OmegaConf.load(default_cfg_path)
+            vae_cfg.ddconfig.resolution = 256
+            vae = ImageVAE(vae_cfg)
 
         # Load weights
         state_dict = checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
@@ -456,7 +463,7 @@ def main():
                     video = video.half()
                 with torch.no_grad():
                     enc = vae.encode(video)
-                    latent = (enc.latent_dist.sample() if hasattr(enc, "latent_dist") else enc.sample()).to(torch.float16 if args.fp16 else torch.bfloat16)
+                    latent = (enc.latent_dist.mode() if hasattr(enc, "latent_dist") else enc.mode()).to(torch.float16 if args.fp16 else torch.bfloat16)
                 safe_torch_save(latent.cpu(), save_path)
                 encoded_count += 1
             except Exception as e:
