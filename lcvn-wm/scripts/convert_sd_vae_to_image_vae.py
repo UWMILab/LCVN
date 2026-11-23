@@ -133,14 +133,23 @@ def verify_equivalence(
     image_vae = image_vae.to(device).eval()
     torch.manual_seed(0)
     x = torch.randn(2, 3, resolution, resolution, device=device).clamp(-1.0, 1.0)
-    with torch.no_grad():
-        sd_dist = sd_vae.encode(x).latent_dist
-        im_dist = image_vae.encode(x)
-        mean_diff = (sd_dist.mean - im_dist.mean).abs().max().item()
-        logvar_diff = (sd_dist.logvar - im_dist.logvar).abs().max().item()
-        sd_rec = sd_vae.decode(sd_dist.mode()).sample
-        im_rec = image_vae.decode(im_dist.mode())
-        dec_diff = (sd_rec - im_rec).abs().max().item()
+    prev_matmul_tf32 = torch.backends.cuda.matmul.allow_tf32
+    prev_cudnn_tf32 = torch.backends.cudnn.allow_tf32
+    try:
+        # Disable TF32 during strict numerical equivalence verification (SD-VAE uses SDPA while ImageVAE uses bmm)
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        with torch.no_grad():
+            sd_dist = sd_vae.encode(x).latent_dist
+            im_dist = image_vae.encode(x)
+            mean_diff = (sd_dist.mean - im_dist.mean).abs().max().item()
+            logvar_diff = (sd_dist.logvar - im_dist.logvar).abs().max().item()
+            sd_rec = sd_vae.decode(sd_dist.mode()).sample
+            im_rec = image_vae.decode(im_dist.mode())
+            dec_diff = (sd_rec - im_rec).abs().max().item()
+    finally:
+        torch.backends.cuda.matmul.allow_tf32 = prev_matmul_tf32
+        torch.backends.cudnn.allow_tf32 = prev_cudnn_tf32
     print(
         f"[Verify] max abs diff -> mean={mean_diff:.3e}, "
         f"logvar={logvar_diff:.3e}, decode={dec_diff:.3e}"
