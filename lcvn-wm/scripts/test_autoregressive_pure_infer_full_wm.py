@@ -103,7 +103,7 @@ def autoregressive_rollout(inferencer, history_latents: torch.Tensor, actions: t
             gt_index = 4 + k - 1
             gt_available = gt_index < T_total
             gt_latent_k = latents_all[gt_index].unsqueeze(0).to(device) if gt_available else None
-            pred_latent, _ = inferencer.predict(hist, acts, return_rgb=True)
+            pred_latent, _ = inferencer.predict(hist, acts, return_rgb=False)
             
             # Decode latents
             # Since we have regenerated latents with the correct VAE checkpoint,

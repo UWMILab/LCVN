@@ -74,7 +74,7 @@ def run_local(cfg: DictConfig):
     requeue_is_existing_run = requeue is not None and is_existing_run(requeue_path)
 
     # Set up logging with wandb.
-    wandb_mode = os.environ.get("WANDB_MODE", str(cfg.wandb.mode)).lower()
+    wandb_mode = (os.environ.get("WANDB_MODE") or str(cfg.wandb.mode)).strip().lower()
     if wandb_mode != "disabled":
         # If resuming, merge into the existing run on wandb.
         resume = cfg.get("resume", None)
@@ -97,7 +97,7 @@ def run_local(cfg: DictConfig):
         }
         log_model_cfg = wandb_kwargs.pop("log_model", None)
         if log_model_cfg is None:
-            log_model_cfg = cfg.get("logger", {}).get("wandb", {}).get("log_model", False)
+            log_model_cfg = OmegaConf.select(cfg, "logger.wandb.log_model", default=False)
         project_root = Path.cwd()
         while not (project_root / ".git").exists():
             project_root = project_root.parent
@@ -246,7 +246,7 @@ def run(cfg: DictConfig):
             "must specify a name for the run with command line argument '+name=[name]'"
         )
 
-    effective_wandb_mode = os.environ.get("WANDB_MODE", str(cfg.wandb.mode)).lower()
+    effective_wandb_mode = (os.environ.get("WANDB_MODE") or str(cfg.wandb.mode)).strip().lower()
     if not cfg.wandb.get("entity", None) and effective_wandb_mode not in ("offline", "disabled"):
         raise ValueError(
             "must specify wandb entity in 'configurations/config.yaml' or with command line"

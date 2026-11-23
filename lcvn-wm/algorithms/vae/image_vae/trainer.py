@@ -312,7 +312,7 @@ class ImageVAE(VAE):
         elif is_hf_path(path):
             path = hf_to_local_path(path)
         checkpoint = torch.load(path, map_location="cpu", weights_only=False)
-        if "cfg" not in checkpoint:
+        if not checkpoint.get("cfg"):
             from pathlib import Path
 
             checkpoint["cfg"] = OmegaConf.load(

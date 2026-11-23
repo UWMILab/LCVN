@@ -214,7 +214,7 @@ class DFoTVideo(BasePytorchAlgo):
             checkpoint = torch.load(path, map_location="cpu", weights_only=False)
 
             # Initialize model structure
-            if "cfg" in checkpoint:
+            if checkpoint.get("cfg"):
                 self.vae = ImageVAE(checkpoint["cfg"])
             else:
                 from pathlib import Path

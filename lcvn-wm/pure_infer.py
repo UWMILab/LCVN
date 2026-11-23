@@ -39,9 +39,9 @@ class LDiTPureInference:
             candidate = current / ".hydra" / "config.yaml"
             if candidate.exists():
                 full_cfg = OmegaConf.load(candidate)
-                OmegaConf.resolve(full_cfg)
+                algo_node = getattr(full_cfg, "algorithm", full_cfg)
                 print(f"Hydra config resolved: {candidate}")
-                return getattr(full_cfg, "algorithm", full_cfg)
+                return OmegaConf.create(OmegaConf.to_container(algo_node, resolve=True))
             if current.parent == current:
                 break
             current = current.parent
@@ -52,6 +52,10 @@ class LDiTPureInference:
 
         # Fallback: compose default LCVN DiT-XL config via Hydra
         from hydra import compose, initialize_config_dir
+        from hydra.core.global_hydra import GlobalHydra
+
+        if GlobalHydra.instance().is_initialized():
+            GlobalHydra.instance().clear()
 
         config_dir = Path(__file__).resolve().parent / "configurations"
         with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
@@ -63,17 +67,20 @@ class LDiTPureInference:
                     "experiment=video_generation",
                 ],
             )
-            OmegaConf.resolve(full_cfg)
+            algo_cfg = OmegaConf.create(
+                OmegaConf.to_container(full_cfg.algorithm, resolve=True)
+            )
         print(f"Hydra config composed from defaults: {config_dir}")
-        return full_cfg.algorithm
+        return algo_cfg
 
     def _load_dfot_model(self, checkpoint_path: str, use_ema: bool = True):
         print(f"Loading model weights: {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         algo_cfg = self._resolve_algo_cfg(checkpoint_path, checkpoint)
 
-        # Pure inference does not need heavy video metric models (I3D/FID/LPIPS)
+        # Pure inference does not need torch.compile or heavy video metric models
         with open_dict(algo_cfg):
+            algo_cfg.compile = False
             if "tasks" in algo_cfg:
                 if "prediction" in algo_cfg.tasks:
                     algo_cfg.tasks.prediction.enabled = False
@@ -88,7 +95,7 @@ class LDiTPureInference:
             use_ema
             and isinstance(checkpoint, dict)
             and checkpoint.get("optimizer_states")
-            and "ema" in checkpoint["optimizer_states"][0]
+            and checkpoint["optimizer_states"][0].get("ema")
         ):
             model._load_ema_weights_to_state_dict(checkpoint)
             print("Loaded EMA weights from checkpoint optimizer_states.")

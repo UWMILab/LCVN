@@ -123,11 +123,16 @@ def convert_state_dict(diffusers_sd: Dict[str, torch.Tensor]) -> Dict[str, torch
     return mapped
 
 
-def verify_equivalence(sd_vae: AutoencoderKL, image_vae: ImageVAE, device: torch.device) -> None:
+def verify_equivalence(
+    sd_vae: AutoencoderKL,
+    image_vae: ImageVAE,
+    device: torch.device,
+    resolution: int = 256,
+) -> None:
     sd_vae = sd_vae.to(device).eval()
     image_vae = image_vae.to(device).eval()
     torch.manual_seed(0)
-    x = torch.randn(2, 3, 256, 256, device=device).clamp(-1.0, 1.0)
+    x = torch.randn(2, 3, resolution, resolution, device=device).clamp(-1.0, 1.0)
     with torch.no_grad():
         sd_dist = sd_vae.encode(x).latent_dist
         im_dist = image_vae.encode(x)
@@ -149,7 +154,9 @@ def verify_equivalence(sd_vae: AutoencoderKL, image_vae: ImageVAE, device: torch
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=str, default="stabilityai/sd-vae-ft-ema")
-    parser.add_argument("--output", type=str, default="../outputs/vae.ckpt")
+    parser.add_argument(
+        "--output", type=str, default=str(WM_ROOT.parent / "outputs" / "vae.ckpt")
+    )
     parser.add_argument("--resolution", type=int, default=256)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
@@ -164,7 +171,7 @@ def main():
     print(f"Strict load passed ({len(mapped_sd)} tensors).")
 
     device = torch.device(args.device)
-    verify_equivalence(sd_vae, image_vae, device)
+    verify_equivalence(sd_vae, image_vae, device, resolution=args.resolution)
 
     out_path = Path(args.output).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -186,12 +193,12 @@ def main():
 
     # Reload smoke verification across ImageVAE._from_pretrained_custom & convert_VAE.load_vae
     reloaded_custom = ImageVAE._from_pretrained_custom(str(out_path))
-    verify_equivalence(sd_vae, reloaded_custom, device)
+    verify_equivalence(sd_vae, reloaded_custom, device, resolution=args.resolution)
 
     from convert_VAE import load_vae
 
     reloaded_convert = load_vae(str(out_path), device, use_fp16=False)
-    verify_equivalence(sd_vae, reloaded_convert, device)
+    verify_equivalence(sd_vae, reloaded_convert, device, resolution=args.resolution)
     print("All reload & numerical equivalence checks PASSED.")
 
 

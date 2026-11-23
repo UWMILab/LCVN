@@ -250,9 +250,12 @@ class SocialAdvancedVideoDataset(BaseAdvancedVideoDataset):
         if isinstance(video_metadata, (str, Path)):
             video_path = Path(video_metadata)
         else:
-            video_path = Path(
-                video_metadata.get("video_paths", video_metadata.get("video_path"))
-            )
+            raw_path = video_metadata.get("video_paths", video_metadata.get("video_path"))
+            if raw_path is None:
+                raise ValueError(
+                    f"Missing 'video_paths' / 'video_path' in video_metadata: {list(video_metadata.keys())}"
+                )
+            video_path = Path(raw_path)
 
         if not video_path.exists():
             raise FileNotFoundError(f"Video path does not exist: {video_path}")

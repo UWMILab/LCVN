@@ -43,7 +43,7 @@ def load_vae(ckpt_path: str, device: torch.device, use_fp16: bool) -> ImageVAE:
         checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
 
         # Try to initialize from config in checkpoint
-        if "cfg" in checkpoint:
+        if checkpoint.get("cfg"):
             vae = ImageVAE(checkpoint["cfg"])
         else:
             # No cfg found, fall back to repository ImageVAE config
