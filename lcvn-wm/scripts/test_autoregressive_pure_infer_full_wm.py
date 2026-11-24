@@ -103,7 +103,7 @@ def autoregressive_rollout(inferencer, history_latents: torch.Tensor, actions: t
             gt_index = 4 + k - 1
             gt_available = gt_index < T_total
             gt_latent_k = latents_all[gt_index].unsqueeze(0).to(device) if gt_available else None
-            pred_latent, _ = inferencer.predict(hist, acts, return_rgb=True)
+            pred_latent, _ = inferencer.predict(hist, acts, return_rgb=False)
             
             # Decode latents
             # Since we have regenerated latents with the correct VAE checkpoint,
@@ -193,23 +193,29 @@ def gather_targets(data_dir: Path, targets: List[Tuple[str, str]], split: str) -
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", type=str, default="lcvn-wm/data/lcvn")
-    parser.add_argument("--dfot-ckpt", type=str, default="lcvn-wm/outputs/2025-12-16/04-30-11/checkpoints/epoch=epoch=20-loss=training/loss=0.1421.ckpt")
-    parser.add_argument("--vae-ckpt", type=str, default="weights/vae/vae_epoch3_step50000.ckpt")
-    parser.add_argument("--out-dir", type=str, default="lcvn-wm/autoreg_vis")
-    parser.add_argument("--split", type=str, default="validation")
+    parser.add_argument("--data-dir", type=str, default="data/lcvn")
+    parser.add_argument("--dfot-ckpt", type=str, default="../outputs/social_dit_xl.ckpt")
+    parser.add_argument("--vae-ckpt", type=str, default="../outputs/vae.ckpt")
+    parser.add_argument("--out-dir", type=str, default="autoreg_vis")
+    parser.add_argument("--split", type=str, default="validation_seen")
     parser.add_argument("--num-trajectories", type=int, default=3)
     parser.add_argument("--targets", type=str, default="")
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--force-sampling-steps", type=int, default=50)
     parser.add_argument("--horizon", type=int, default=-1)
+    parser.add_argument("--no-ema", action="store_true", default=False)
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir)
     out_dir_root = Path(args.out_dir)
     device = args.device
 
-    inferencer = LDiTPureInference(dfot_checkpoint_path=args.dfot_ckpt, vae_checkpoint_path=args.vae_ckpt, device=device)
+    inferencer = LDiTPureInference(
+        dfot_checkpoint_path=args.dfot_ckpt,
+        vae_checkpoint_path=args.vae_ckpt,
+        device=device,
+        use_ema=not args.no_ema,
+    )
 
     if args.targets.strip():
         pairs = []

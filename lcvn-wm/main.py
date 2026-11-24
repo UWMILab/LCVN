@@ -74,7 +74,8 @@ def run_local(cfg: DictConfig):
     requeue_is_existing_run = requeue is not None and is_existing_run(requeue_path)
 
     # Set up logging with wandb.
-    if cfg.wandb.mode != "disabled":
+    wandb_mode = (os.environ.get("WANDB_MODE") or str(cfg.wandb.mode)).strip().lower()
+    if wandb_mode != "disabled":
         # If resuming, merge into the existing run on wandb.
         resume = cfg.get("resume", None)
         name = (
@@ -88,12 +89,15 @@ def run_local(cfg: DictConfig):
         else:
             logger_cls = SpaceEfficientWandbLogger
 
-        offline = cfg.wandb.mode != "online"
+        offline = wandb_mode != "online"
         wandb_kwargs = {
             k: v
             for k, v in OmegaConf.to_container(cfg.wandb, resolve=True).items()
             if k != "mode"
         }
+        log_model_cfg = wandb_kwargs.pop("log_model", None)
+        if log_model_cfg is None:
+            log_model_cfg = OmegaConf.select(cfg, "logger.wandb.log_model", default=False)
         project_root = Path.cwd()
         while not (project_root / ".git").exists():
             project_root = project_root.parent
@@ -115,7 +119,7 @@ def run_local(cfg: DictConfig):
             name=name,
             save_dir=str(output_dir),
             offline=offline,
-            log_model="all" if not offline else False,
+            log_model=log_model_cfg if not offline else False,
             config=OmegaConf.to_container(cfg),
             id=resume or requeue,
             dir=str(wandb_base),
@@ -242,7 +246,8 @@ def run(cfg: DictConfig):
             "must specify a name for the run with command line argument '+name=[name]'"
         )
 
-    if not cfg.wandb.get("entity", None) and os.environ.get("WANDB_MODE", "online") not in ("offline", "disabled"):
+    effective_wandb_mode = (os.environ.get("WANDB_MODE") or str(cfg.wandb.mode)).strip().lower()
+    if not cfg.wandb.get("entity", None) and effective_wandb_mode not in ("offline", "disabled"):
         raise ValueError(
             "must specify wandb entity in 'configurations/config.yaml' or with command line"
             " argument 'wandb.entity=[entity]' \n An entity is your wandb user name or group"

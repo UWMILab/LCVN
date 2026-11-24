@@ -214,11 +214,23 @@ class DFoTVideo(BasePytorchAlgo):
             checkpoint = torch.load(path, map_location="cpu", weights_only=False)
 
             # Initialize model structure
-            if "cfg" in checkpoint:
+            if checkpoint.get("cfg"):
                 self.vae = ImageVAE(checkpoint["cfg"])
             else:
-                print("[DFoT] Warning: No 'cfg' in VAE checkpoint, using default 256 config.")
-                self.vae = ImageVAE(OmegaConf.create({"z_channels": 4, "resolution": 256}))
+                from pathlib import Path
+
+                print(
+                    "[DFoT] Warning: No 'cfg' in VAE checkpoint, falling back to "
+                    "configurations/algorithm/image_vae.yaml."
+                )
+                default_vae_cfg = OmegaConf.load(
+                    Path(__file__).resolve().parents[2]
+                    / "configurations"
+                    / "algorithm"
+                    / "image_vae.yaml"
+                )
+                default_vae_cfg.ddconfig.resolution = 256
+                self.vae = ImageVAE(default_vae_cfg)
 
             # Load weights
             state_dict = checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
@@ -488,7 +500,7 @@ class DFoTVideo(BasePytorchAlgo):
 
     def _eval_denoising(self, batch, batch_idx, namespace="training") -> None:
         """Evaluate the denoising performance during training."""
-        xs, conditions, masks, gt_videos = batch
+        xs, conditions, masks, gt_videos, *rest = batch
 
         xs = xs[:, : self.max_tokens]
         if conditions is not None:
@@ -497,7 +509,7 @@ class DFoTVideo(BasePytorchAlgo):
         if gt_videos is not None:
             gt_videos = gt_videos[:, : self.max_frames]
 
-        batch = (xs, conditions, masks, gt_videos)
+        batch = (xs, conditions, masks, gt_videos, *rest)
         output = self.training_step(batch, batch_idx, namespace=namespace)
 
         gt_videos = gt_videos if self.is_latent_diffusion else output["xs"]

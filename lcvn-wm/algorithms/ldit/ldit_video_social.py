@@ -3,7 +3,7 @@ DFoT Video model for Social Navigation
 Implements MLP encoding for delta conditions and optional instruction cross-attention.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig, OmegaConf
@@ -250,3 +250,36 @@ class LDiTVideoSocial(DFoTVideo):
             "optimizer": optimizer_dynamics,
             "lr_scheduler": lr_scheduler_config,
         }
+
+    def _should_include_in_checkpoint(self, key: str) -> bool:
+        if super()._should_include_in_checkpoint(key):
+            return True
+        if key.startswith("mlp_encoder."):
+            return True
+        if self.use_language and key.startswith("clip_projection."):
+            return True
+        return False
+
+    def _load_ema_weights_to_state_dict(self, checkpoint: Dict[str, Any]) -> None:
+        if (
+            checkpoint.get("pretrained_ema", False)
+            and len(checkpoint.get("optimizer_states", [])) == 0
+        ):
+            return
+        ema_weights = checkpoint["optimizer_states"][0]["ema"]
+        parameter_keys = [
+            "diffusion_model." + k for k, _ in self.diffusion_model.named_parameters()
+        ] + [
+            "mlp_encoder." + k for k, _ in self.mlp_encoder.named_parameters()
+        ]
+        if self.use_language:
+            parameter_keys += [
+                "clip_projection." + k
+                for k, _ in self.clip_projection.named_parameters()
+            ]
+        assert len(parameter_keys) == len(ema_weights), (
+            f"Number of original weights ({len(parameter_keys)}) and EMA weights "
+            f"({len(ema_weights)}) do not match."
+        )
+        for key, weight in zip(parameter_keys, ema_weights):
+            checkpoint["state_dict"][key] = weight

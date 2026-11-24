@@ -19,14 +19,16 @@ training:
     num_workers: 16
     shuffle: False
   checkpointing:
-    every_n_train_steps: null  
+    every_n_train_steps: null
     every_n_epochs: 5
-    save_last: true  
+    save_last: "link"
     save_top_k: 1
-    monitor: "training/loss"
-    mode: "min" 
+    # Keep monitor null so periodic checkpoints and last.ckpt always update every N epochs
+    # instead of gating on noisy single-step diffusion training/loss.
+    monitor: null
+    mode: "min"
     enable_version_counter: true
-    filename: "epoch={epoch:02d}-loss={training/loss:.4f}"
+    filename: "{epoch:02d}-{step}"
   optim:
     gradient_clip_val: 2.0  
 
